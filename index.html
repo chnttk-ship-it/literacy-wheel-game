@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>วงล้อ "อะไรเอ่ย กับ สกร."</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .game-title {
+            color: #4a5568;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            color: #718096;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .player-input {
+            margin-bottom: 30px;
+        }
+
+        .player-input input {
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 16px;
+            width: 250px;
+            margin-right: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .wheel-container {
+            position: relative;
+            margin: 30px auto;
+            display: none;
+        }
+
+        .wheel {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 8px solid #4a5568;
+            position: relative;
+            margin: 0 auto;
+            transition: transform 3s cubic-bezier(0.23, 1, 0.320, 1);
+        }
+
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+        }
+
+        .wheel-section:nth-child(1) { background: #ff6b6b; transform: rotate(0deg); }
+        .wheel-section:nth-child(2) { background: #4ecdc4; transform: rotate(45deg); }
+        .wheel-section:nth-child(3) { background: #45b7d1; transform: rotate(90deg); }
+        .wheel-section:nth-child(4) { background: #96ceb4; transform: rotate(135deg); }
+        .wheel-section:nth-child(5) { background: #ffeaa7; transform: rotate(180deg); }
+        .wheel-section:nth-child(6) { background: #dda0dd; transform: rotate(225deg); }
+        .wheel-section:nth-child(7) { background: #98d8c8; transform: rotate(270deg); }
+        .wheel-section:nth-child(8) { background: #f7dc6f; transform: rotate(315deg); }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 15px solid transparent;
+            border-right: 15px solid transparent;
+            border-top: 20px solid #e74c3c;
+            z-index: 10;
+        }
+
+        .spin-btn {
+            margin-top: 20px;
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            font-size: 18px;
+            padding: 15px 30px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            position: relative;
+            animation: slideIn 0.3s;
+        }
+
+        .question-title {
+            color: #2d3748;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .choices {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .choice-btn {
+            background: #f7fafc;
+            border: 2px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .choice-btn:hover {
+            background: #edf2f7;
+            border-color: #cbd5e0;
+        }
+
+        .choice-btn.correct {
+            background: #c6f6d5;
+            border-color: #38a169;
+            color: #22543d;
+        }
+
+        .choice-btn.incorrect {
+            background: #fed7d7;
+            border-color: #e53e3e;
+            color: #742a2a;
+        }
+
+        .explanation {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            text-align: left;
+            display: none;
+        }
+
+        .next-btn {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .player-info {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="game-title">🎡 วงล้อ "อะไรเอ่ย กับ สกร." 📚</h1>
+        <p class="subtitle">เกมทดสอบความรู้วันสากลแห่งการรู้หนังสือ</p>
+        
+        <div class="player-input" id="playerInput">
+            <input type="text" id="playerName" placeholder="กรอกชื่อของคุณ" maxlength="50">
+            <button class="btn" onclick="startGame()">เริ่มเกม</button>
+        </div>
+
+        <div class="player-info" id="playerInfo">
+            <h3>ยินดีต้อนรับ: <span id="displayName"></span></h3>
+        </div>
+
+        <div class="wheel-container" id="wheelContainer">
+            <div class="wheel-pointer"></div>
+            <div class="wheel" id="wheel">
+                <div class="wheel-section"></div>
+                <div class="wheel-section"></div>
+                <div class="wheel-section"></div>
+                <div class="wheel-section"></div>
+                <div class="wheel-section"></div>
+                <div class="wheel-section"></div>
+                <div class="wheel-section"></div>
+                <div class="wheel-section"></div>
+            </div>
+            <button class="btn spin-btn" id="spinBtn" onclick="spinWheel()">🎡 หมุนวงล้อ!</button>
+        </div>
+    </div>
+
+    <!-- Modal for Questions -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content">
+            <div class="question-title" id="questionTitle"></div>
+            <div class="choices" id="choices"></div>
+            <div class="explanation" id="explanation"></div>
+            <button class="btn next-btn" id="nextBtn" onclick="closeModal()">เล่นต่อ (กรอกชื่อใหม่)</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "วันสากลแห่งการรู้หนังสือตรงกับวันใดของปี?",
+                choices: ["8 กันยายน", "8 สิงหาคม", "8 ตุลาคม", "8 กรกฎาคม"],
+                correct: 0,
+                explanation: "วันสากลแห่งการรู้หนังสือตรงกับวันที่ 8 กันยายนของทุกปี ซึ่งถูกกำหนดขึ้นโดยองค์การยูเนสโกในปี 2509"
+            },
+            {
+                question: "องค์การใดเป็นผู้กำหนดวันสากลแห่งการรู้หนังสือ?",
+                choices: ["WHO", "UNESCO", "UNICEF", "UN"],
+                correct: 1,
+                explanation: "องค์การยูเนสโก (UNESCO) เป็นผู้กำหนดวันสากลแห่งการรู้หนังสือขึ้นเมื่อปี 2509 เพื่อส่งเสริมการศึกษาทั่วโลก"
+            },
+            {
+                question: "การรู้หนังสือหมายถึงอะไร?",
+                choices: ["การอ่านได้เท่านั้น", "การเขียนได้เท่านั้น", "การอ่านและเขียนได้", "การคิดเลขได้"],
+                correct: 2,
+                explanation: "การรู้หนังสือ (Literacy) หมายถึงความสามารถในการอ่านและเขียนได้อย่างมีความเข้าใจ สามารถใช้ในชีวิตประจำวันได้"
+            },
+            {
+                question: "ประเทศไทยมีอัตราการรู้หนังสือประมาณเท่าใด?",
+                choices: ["85%", "93%", "98%", "76%"],
+                correct: 2,
+                explanation: "ประเทศไทยมีอัตราการรู้หนังสือสูงถึงประมาณ 98% ซึ่งถือว่าอยู่ในระดับสูงเมื่อเทียบกับค่าเฉลียโลก"
+            },
+            {
+                question: "วัตถุประสงค์หลักของวันสากลแห่งการรู้หนังสือคือ?",
+                choices: ["เพิ่มยпродаж หนังสือ", "ส่งเสริมการอ่าน", "ลดความยากจน", "เพิ่มการศึกษา"],
+                correct: 3,
+                explanation: "วัตถุประสงค์หลักคือการเพิ่มโอกาสทางการศึกษาและการรู้หนังสือให้กับผู้คนทั่วโลก เพื่อลดความเหลื่อมล้ำทางการศึกษา"
+            },
+            {
+                question: "ในปัจจุบันมีคนไม่รู้หนังสือทั่วโลกประมาณกี่คน?",
+                choices: ["500 ล้านคน", "771 ล้านคน", "1 พันล้านคน", "300 ล้านคน"],
+                correct: 1,
+                explanation: "ตามข้อมูลขององค์การยูเนสโก มีผู้ใหญ่ประมาณ 771 ล้านคนทั่วโลกที่ยังไม่รู้หนังสือ โดยส่วนใหญ่เป็นผู้หญิง"
+            },
+            {
+                question: "การรู้หนังสือช่วยลดปัญหาใดมากที่สุด?",
+                choices: ["โรคภัย", "ความยากจน", "ภัยธรรมชาติ", "มลพิษ"],
+                correct: 1,
+                explanation: "การรู้หนังสือช่วยเพิ่มโอกาสในการหางานและสร้างรายได้ ทำให้สามารถลดความยากจนได้อย่างมีประสิทธิภาพ"
+            },
+            {
+                question: "ในกลุมผู้ไม่รู้หนังสือ เพศใดมีสัดส่วนมากกว่า?",
+                choices: ["เพศชาย", "เพศหญิง", "เท่ากัน", "ไม่มีข้อมูล"],
+                correct: 1,
+                explanation: "ผู้หญิงมีสัดส่วนในกลุ่มผู้ไม่รู้หนังสือมากกว่าผู้ชาย คิดเป็น 2 ใน 3 ของผู้ไม่รู้หนังสือทั่วโลก เนื่องจากอุปสรรคทางสังคมและเศรษฐกิจ"
+            }
+        ];
+
+        let currentPlayer = '';
+        let playedQuestions = [];
+        let spinning = false;
+
+        // Sound effects using Web Audio API
+        function playSound(type) {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            let frequency, duration;
+
+            switch(type) {
+                case 'spin':
+                    frequency = 440;
+                    duration = 0.1;
+                    break;
+                case 'correct':
+                    frequency = 523.25; // C5
+                    duration = 0.5;
+                    break;
+                case 'incorrect':
+                    frequency = 220; // A3
+                    duration = 0.3;
+                    break;
+                case 'question':
+                    frequency = 659.25; // E5
+                    duration = 0.2;
+                    break;
+            }
+
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            oscillator.type = 'sine';
+
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        function startGame() {
+            const playerName = document.getElementById('playerName').value.trim();
+            if (!playerName) {
+                alert('กรุณากรอกชื่อก่อนเริ่มเกม');
+                return;
+            }
+
+            currentPlayer = playerName;
+            
+            // Save player data (in real implementation, this would go to Google Sheets)
+            console.log('Player data:', { name: playerName, timestamp: new Date().toISOString() });
+
+            document.getElementById('displayName').textContent = playerName;
+            document.getElementById('playerInput').style.display = 'none';
+            document.getElementById('playerInfo').style.display = 'block';
+            document.getElementById('wheelContainer').style.display = 'block';
+        }
+
+        function spinWheel() {
+            if (spinning) return;
+
+            spinning = true;
+            const spinBtn = document.getElementById('spinBtn');
+            spinBtn.disabled = true;
+            spinBtn.textContent = 'กำลังหมุน...';
+
+            // Play spin sound
+            playSound('spin');
+
+            const wheel = document.getElementById('wheel');
+            const randomRotation = 1800 + Math.random() * 1800; // 5-10 full rotations
+            wheel.style.transform = `rotate(${randomRotation}deg)`;
+
+            setTimeout(() => {
+                showQuestion();
+                spinning = false;
+                spinBtn.disabled = false;
+                spinBtn.textContent = '🎡 หมุนวงล้อ!';
+            }, 3000);
+        }
+
+        function showQuestion() {
+            // Play question sound
+            playSound('question');
+
+            let availableQuestions = questions.filter((_, index) => !playedQuestions.includes(index));
+            
+            if (availableQuestions.length === 0) {
+                alert('🎉 ยินดีด้วย! คุณได้ตอบคำถามครบทุกข้อแล้ว');
+                resetGame();
+                return;
+            }
+
+            const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+            const questionIndex = questions.indexOf(availableQuestions[randomIndex]);
+            const question = questions[questionIndex];
+            
+            playedQuestions.push(questionIndex);
+
+            document.getElementById('questionTitle').textContent = question.question;
+            
+            const choicesContainer = document.getElementById('choices');
+            choicesContainer.innerHTML = '';
+            
+            question.choices.forEach((choice, index) => {
+                const button = document.createElement('button');
+                button.className = 'choice-btn';
+                button.textContent = choice;
+                button.onclick = () => selectAnswer(index, question.correct, question.explanation);
+                choicesContainer.appendChild(button);
+            });
+
+            document.getElementById('explanation').style.display = 'none';
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('questionModal').style.display = 'block';
+        }
+
+        function selectAnswer(selected, correct, explanation) {
+            const choices = document.querySelectorAll('.choice-btn');
+            choices.forEach((btn, index) => {
+                btn.disabled = true;
+                if (index === correct) {
+                    btn.classList.add('correct');
+                } else if (index === selected && index !== correct) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            if (selected === correct) {
+                playSound('correct');
+            } else {
+                playSound('incorrect');
+            }
+
+            document.getElementById('explanation').textContent = explanation;
+            document.getElementById('explanation').style.display = 'block';
+            document.getElementById('nextBtn').style.display = 'inline-block';
+        }
+
+        function closeModal() {
+            document.getElementById('questionModal').style.display = 'none';
+        }
+
+        function resetGame() {
+            playedQuestions = [];
+            document.getElementById('playerInput').style.display = 'block';
+            document.getElementById('playerInfo').style.display = 'none';
+            document.getElementById('wheelContainer').style.display = 'none';
+            document.getElementById('playerName').value = '';
+        }
+
+        // Allow Enter key to start game
+        document.getElementById('playerName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                startGame();
+            }
+        });
+    </script>
+</body>
+</html>
